@@ -6,28 +6,33 @@ public abstract class Item {
     private String category;
 
     public Item(String id, String name, int quantity, double price, String category) {
-        this.id = id;
-        this.name = name;
-        this.quantity = quantity;
-        this.price = price;
-        this.category = category;
+        setId(id);
+        setName(name);
+        setQuantity(quantity);
+        setPrice(price);
+        setCategory(category);
     }
 
-   
     public String getId() { 
         return id; 
     }
     
     public void setId(String id) { 
-        this.id = id; 
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID cannot be empty.");
+        }
+        this.id = id.trim(); 
     }
 
     public String getName() { 
         return name; 
     }
     
-    public void setName(String name) { 
-        this.name = name; 
+    public void setName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be empty.");
+        }
+        this.name = name.trim();
     }
 
     public int getQuantity() { 
@@ -35,6 +40,9 @@ public abstract class Item {
     }
     
     public void setQuantity(int quantity) { 
+        if (quantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative.");
+        }
         this.quantity = quantity; 
     }
 
@@ -43,6 +51,9 @@ public abstract class Item {
     }
     
     public void setPrice(double price) { 
+        if (price < 0.0) {
+            throw new IllegalArgumentException("Price cannot be negative.");
+        }
         this.price = price; 
     }
 
@@ -51,6 +62,9 @@ public abstract class Item {
     }
     
     public void setCategory(String category) { 
-        this.category = category; 
+        if (category == null || category.trim().isEmpty()) {
+            throw new IllegalArgumentException("Category cannot be empty.");
+        }
+        this.category = category.trim();
     }
 }

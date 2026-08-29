@@ -128,6 +128,25 @@ public class Main {
             }
         }
     }
+    
+    private static String getNonEmptyInput(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (!input.isEmpty()) {
+                return input;
+            }
+            System.out.println("Input cannot be empty. Please try again.");
+        }
+    }
+
+    private static boolean isInventoryEmpty() {
+        if (inventory.isEmpty()) {
+            System.out.println("Inventory is currently empty!");
+            return true;
+        }
+        return false;
+    }
 
     private static void addItem() {
         System.out.print("Input Category (Clothing, Electronics, Entertainment): ");
@@ -138,30 +157,24 @@ public class Main {
             return;
         }
 
-        System.out.print("Input ID: ");
-        String id = scanner.nextLine().trim();
-        if (id.isEmpty()) {
-            System.out.println("ID cannot be empty.");
-            return;
-        }
+        String id = getNonEmptyInput("Input ID: ");
         if (findItemById(id) != null) {
             System.out.println("Error: An item with the ID " + id + " already exists!");
             return;
         }
 
-        System.out.print("Input Name: ");
-        String name = scanner.nextLine().trim();
-
+        String name = getNonEmptyInput("Input Name: ");
         int quantity = getValidatedIntInput("Input Quantity: ");
-        double price = getValidatedDoubleInput("Input Price: ");
+        double price = getValidatedDoubleInput("Input Price: ₱");
 
         inventory.add(new InventoryItem(id, name, quantity, price, capitalizeCategory(categoryInput)));
         System.out.println("Item added successfully!");
     }
 
     private static void updateItem() {
-        System.out.print("Input ID first: ");
-        String id = scanner.nextLine().trim();
+        if (isInventoryEmpty()) return;
+
+        String id = getNonEmptyInput("Input ID first: ");
         Item item = findItemById(id);
 
         if (item == null) {
@@ -176,20 +189,21 @@ public class Main {
             int oldVal = item.getQuantity();
             int newVal = getValidatedIntInput("Input new quantity: ");
             item.setQuantity(newVal);
-            System.out.println("Quantity of Item " + item.getName() + " is updated from " + oldVal + " to " + newVal + "");
+            System.out.println("Quantity of Item " + item.getName() + " updated from " + oldVal + " to " + newVal);
         } else if (choice.equals("price")) {
             double oldVal = item.getPrice();
-            double newVal = getValidatedDoubleInput("Input new price: ");
+            double newVal = getValidatedDoubleInput("Input new price: ₱ ");
             item.setPrice(newVal);
-            System.out.println("Price of Item " + item.getName() + " is updated from " + oldVal + " to " + newVal + "");
+            System.out.println("Price of Item " + item.getName() + " updated from ₱" + oldVal + " to ₱" + newVal);
         } else {
             System.out.println("Invalid update target selection! Operation cancelled.");
         }
     }
 
     private static void removeItem() {
-        System.out.print("Input ID: ");
-        String id = scanner.nextLine().trim();
+        if (isInventoryEmpty()) return;
+
+        String id = getNonEmptyInput("Input ID: ");
         Item item = findItemById(id);
 
         if (item != null) {
@@ -201,8 +215,9 @@ public class Main {
     }
 
     private static void displayItemsByCategory() {
-        System.out.print("Input Category: ");
-        String categoryInput = scanner.nextLine().trim();
+        if (isInventoryEmpty()) return;
+
+        String categoryInput = getNonEmptyInput("Input Category: ");
 
         if (!isValidCategory(categoryInput)) {
             System.out.println("Category " + categoryInput + " does not exist!");
@@ -210,14 +225,14 @@ public class Main {
         }
 
         String targetCategory = capitalizeCategory(categoryInput);
-        System.out.printf("%-10s | %-20s | %-10s | %-10s\n", "ID", "Name", "Quantity", "Price"); //
+        System.out.printf("%-10s | %-20s | %-10s | %-10s\n", "ID", "Name", "Quantity", "Price"); 
         System.out.println("--------------------------------------------------------");
         
         boolean found = false;
         for (Item item : inventory) {
             if (item.getCategory().equalsIgnoreCase(targetCategory)) {
                 System.out.printf("%-10s | %-20s | %-10d | ₱%,-10.2f\n", 
-                    item.getId(), item.getName(), item.getQuantity(), item.getPrice()); //
+                    item.getId(), item.getName(), item.getQuantity(), item.getPrice()); 
                 found = true;
             }
         }
@@ -227,17 +242,20 @@ public class Main {
     }
 
     private static void displayAllItems() {
-        System.out.printf("%-10s | %-20s | %-10s | %-10s | %-15s\n", "ID", "Name", "Quantity", "Price", "Category"); //
+        if (isInventoryEmpty()) return;
+
+        System.out.printf("%-10s | %-20s | %-10s | %-10s | %-15s\n", "ID", "Name", "Quantity", "Price", "Category"); 
         System.out.println("-----------------------------------------------------------------------");
         for (Item item : inventory) {
-            System.out.printf("%-10s | %-20s | %-10d | %-10.2f | %-15s\n", 
-                item.getId(), item.getName(), item.getQuantity(), item.getPrice(), item.getCategory()); //
+            System.out.printf("%-10s | %-20s | %-10d | ₱%,-10.2f | %-15s\n", 
+                item.getId(), item.getName(), item.getQuantity(), item.getPrice(), item.getCategory()); 
         }
     }
 
     private static void searchItem() {
-        System.out.print("Input ID: ");
-        String id = scanner.nextLine().trim();
+        if (isInventoryEmpty()) return;
+
+        String id = getNonEmptyInput("Input ID: ");
         Item item = findItemById(id);
 
         if (item != null) {
@@ -245,7 +263,7 @@ public class Main {
             System.out.println("ID       : " + item.getId());
             System.out.println("Name     : " + item.getName());
             System.out.println("Quantity : " + item.getQuantity());
-            System.out.println("Price    : " + item.getPrice());
+            System.out.println("Price    : ₱" + item.getPrice());
             System.out.println("Category : " + item.getCategory());
         } else {
             System.out.println("Item not found!");
@@ -253,6 +271,8 @@ public class Main {
     }
 
     private static void sortItems() {
+        if (isInventoryEmpty()) return;
+
         System.out.print("Input if sort by quantity or price: ");
         String sortBy = scanner.nextLine().trim().toLowerCase();
         System.out.print("Input if ascending or descending: ");
@@ -278,24 +298,26 @@ public class Main {
         ArrayList<Item> sortedList = new ArrayList<>(inventory);
         Collections.sort(sortedList, comparator);
 
-        System.out.printf("%-10s | %-20s | %-10s | %-10s | %-15s\n", "ID", "Name", "Quantity", "Price", "Category"); //
+        System.out.printf("%-10s | %-20s | %-10s | %-10s | %-15s\n", "ID", "Name", "Quantity", "Price", "Category"); 
         System.out.println("-----------------------------------------------------------------------");
         for (Item item : sortedList) {
-            System.out.printf("%-10s | %-20s | %-10d | %-10.2f | %-15s\n", 
-                item.getId(), item.getName(), item.getQuantity(), item.getPrice(), item.getCategory()); //
+            System.out.printf("%-10s | %-20s | %-10d | ₱%,-10.2f | %-15s\n", 
+                item.getId(), item.getName(), item.getQuantity(), item.getPrice(), item.getCategory()); 
         }
     }
 
     private static void displayLowStockItems() {
+        if (isInventoryEmpty()) return;
+
         System.out.println("Display Low Stock Items (Quantity <= 5):");
-        System.out.printf("%-10s | %-20s | %-10s | %-10s | %-15s\n", "ID", "Name", "Quantity", "Price", "Category"); //
+        System.out.printf("%-10s | %-20s | %-10s | %-10s | %-15s\n", "ID", "Name", "Quantity", "Price", "Category"); 
         System.out.println("-----------------------------------------------------------------------");
         
         boolean found = false;
         for (Item item : inventory) {
-            if (item.getQuantity() <= 5) { //
-                System.out.printf("%-10s | %-20s | %-10d | %-10.2f | %-15s\n", 
-                    item.getId(), item.getName(), item.getQuantity(), item.getPrice(), item.getCategory()); //
+            if (item.getQuantity() <= 5) { 
+                System.out.printf("%-10s | %-20s | %-10d | ₱%,-10.2f | %-15s\n", 
+                    item.getId(), item.getName(), item.getQuantity(), item.getPrice(), item.getCategory()); 
                 found = true;
             }
         }
