@@ -1,4 +1,9 @@
 public abstract class Item {
+
+    public static final int MAX_QUANTITY = 1000000;
+    public static final double MAX_PRICE = 1000000.00;
+    public static final int MAX_NAME_LENGTH = 20;
+
     private String id;
     private String name;
     private int quantity;
@@ -17,7 +22,7 @@ public abstract class Item {
         return id; 
     }
     
-    public void setId(String id) { 
+    public final void setId(String id) { 
         if (id == null || id.trim().isEmpty()) {
             throw new IllegalArgumentException("ID cannot be empty.");
         }
@@ -28,20 +33,27 @@ public abstract class Item {
         return name; 
     }
     
-    public void setName(String name) {
+    public final void setName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Name cannot be empty.");
         }
-        this.name = name.trim();
+        String trimmed = name.trim();
+        if (trimmed.length() > MAX_NAME_LENGTH) {
+            throw new IllegalArgumentException("Name cannot exceed " + MAX_NAME_LENGTH + " characters.");
+        }
+        this.name = trimmed;
     }
 
     public int getQuantity() { 
         return quantity; 
     }
     
-    public void setQuantity(int quantity) { 
+    public final void setQuantity(int quantity) { 
         if (quantity < 0) {
             throw new IllegalArgumentException("Quantity cannot be negative.");
+        }
+        if (quantity > MAX_QUANTITY) {
+            throw new IllegalArgumentException("Quantity cannot exceed " + MAX_QUANTITY + ".");
         }
         this.quantity = quantity; 
     }
@@ -50,9 +62,15 @@ public abstract class Item {
         return price; 
     }
     
-    public void setPrice(double price) { 
+    public final void setPrice(double price) { 
+        if (Double.isNaN(price) || Double.isInfinite(price)) {
+            throw new IllegalArgumentException("Invalid price value.");
+        }
         if (price < 0.0) {
             throw new IllegalArgumentException("Price cannot be negative.");
+        }
+        if (price > MAX_PRICE) {
+            throw new IllegalArgumentException("Price cannot exceed ₱" + MAX_PRICE + ".");
         }
         this.price = price; 
     }
@@ -61,7 +79,7 @@ public abstract class Item {
         return category; 
     }
     
-    public void setCategory(String category) { 
+    public final void setCategory(String category) { 
         if (category == null || category.trim().isEmpty()) {
             throw new IllegalArgumentException("Category cannot be empty.");
         }

@@ -13,7 +13,7 @@ public class Main {
 
         while (running) {
             printMenu();
-            int choice = getValidatedIntInput("Enter your choice (1-9): ");
+            int choice = getValidatedIntInput("Enter your choice (1-9): ", 1, 9);
 
             switch (choice) {
                 case 1:
@@ -88,21 +88,21 @@ public class Main {
 
     private static Item findItemById(String id) {
         for (Item item : inventory) {
-            if (item.getId().equalsIgnoreCase(id)) {
+            if (item.getId().equalsIgnoreCase(id.trim())) {
                 return item;
             }
         }
         return null;
     }
 
-    private static int getValidatedIntInput(String prompt) {
+    private static int getValidatedIntInput(String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
             try {
                 int value = Integer.parseInt(input);
-                if (value < 0) {
-                    System.out.println("Value cannot be negative. Please try again.");
+                if (value < min || value > max) {
+                    System.out.println("Value must be between " + min + " and " + max + ". Please try again.");
                     continue;
                 }
                 return value;
@@ -112,14 +112,22 @@ public class Main {
         }
     }
 
-    private static double getValidatedDoubleInput(String prompt) {
+    private static double getValidatedDoubleInput(String prompt, double min, double max) {
         while (true) {
             System.out.print(prompt);
             String input = scanner.nextLine().trim();
             try {
                 double value = Double.parseDouble(input);
-                if (value < 0.0) {
+                if (Double.isNaN(value) || Double.isInfinite(value)) {
+                    System.out.println("Invalid numeric value. Please try again.");
+                    continue;
+                }
+                if (value < min) {
                     System.out.println("Price cannot be negative. Please try again.");
+                    continue;
+                }
+                if (value > max) {
+                    System.out.printf("Price cannot exceed ₱%,.2f. Please try again.\n", max);
                     continue;
                 }
                 return value;
@@ -149,23 +157,35 @@ public class Main {
     }
 
     private static void addItem() {
-        System.out.print("Input Category (Clothing, Electronics, Entertainment): ");
-        String categoryInput = scanner.nextLine().trim();
-        
-        if (!isValidCategory(categoryInput)) {
-            System.out.println("Category " + categoryInput + " does not exist!");
-            return;
+        String categoryInput;
+        while (true) {
+            categoryInput = getNonEmptyInput("Input Category (Clothing, Electronics, Entertainment): ");
+            if (isValidCategory(categoryInput)) {
+                break;
+            }
+            System.out.println("Category " + categoryInput + " does not exist! Please enter a valid category.");
         }
 
-        String id = getNonEmptyInput("Input ID: ");
-        if (findItemById(id) != null) {
-            System.out.println("Error: An item with the ID " + id + " already exists!");
-            return;
+        String id;
+        while (true) {
+            id = getNonEmptyInput("Input ID: ");
+            if (findItemById(id) == null) {
+                break;
+            }
+            System.out.println("Error: An item with ID " + id + " already exists! Please use a unique ID.");
         }
 
-        String name = getNonEmptyInput("Input Name: ");
-        int quantity = getValidatedIntInput("Input Quantity: ");
-        double price = getValidatedDoubleInput("Input Price: ₱");
+        String name;
+        while (true) {
+            name = getNonEmptyInput("Input Name: ");
+            if (name.length() <= Item.MAX_NAME_LENGTH) {
+                break;
+            }
+            System.out.println("Name cannot exceed " + Item.MAX_NAME_LENGTH + " characters. Please try again.");
+        }
+
+        int quantity = getValidatedIntInput("Input Quantity (0-" + Item.MAX_QUANTITY + "): ", 0, Item.MAX_QUANTITY);
+        double price = getValidatedDoubleInput("Input Price (0-" + Item.MAX_PRICE + "): ₱", 0.0, Item.MAX_PRICE);
 
         inventory.add(new InventoryItem(id, name, quantity, price, capitalizeCategory(categoryInput)));
         System.out.println("Item added successfully!");
@@ -178,25 +198,30 @@ public class Main {
         Item item = findItemById(id);
 
         if (item == null) {
-            System.out.println("Item not found!!");
+            System.out.println("Item not found!");
             return;
         }
 
-        System.out.print("Do you want to update quantity or price?: ");
-        String choice = scanner.nextLine().trim().toLowerCase();
+        String choice;
+        while (true) {
+            System.out.print("Do you want to update quantity or price?: ");
+            choice = scanner.nextLine().trim().toLowerCase();
+            if (choice.equals("quantity") || choice.equals("price")) {
+                break;
+            }
+            System.out.println("Invalid choice! Please type 'quantity' or 'price'.");
+        }
 
         if (choice.equals("quantity")) {
             int oldVal = item.getQuantity();
-            int newVal = getValidatedIntInput("Input new quantity: ");
+            int newVal = getValidatedIntInput("Input new quantity (0-" + Item.MAX_QUANTITY + "): ", 0, Item.MAX_QUANTITY);
             item.setQuantity(newVal);
             System.out.println("Quantity of Item " + item.getName() + " updated from " + oldVal + " to " + newVal);
-        } else if (choice.equals("price")) {
-            double oldVal = item.getPrice();
-            double newVal = getValidatedDoubleInput("Input new price: ₱ ");
-            item.setPrice(newVal);
-            System.out.println("Price of Item " + item.getName() + " updated from ₱" + oldVal + " to ₱" + newVal);
         } else {
-            System.out.println("Invalid update target selection! Operation cancelled.");
+            double oldVal = item.getPrice();
+            double newVal = getValidatedDoubleInput("Input new price (0-" + Item.MAX_PRICE + "): ₱ ", 0.0, Item.MAX_PRICE);
+            item.setPrice(newVal);
+            System.out.printf("Price of Item %s updated from ₱%,.2f to ₱%,.2f\n", item.getName(), oldVal, newVal);
         }
     }
 
@@ -208,7 +233,7 @@ public class Main {
 
         if (item != null) {
             inventory.remove(item);
-            System.out.println("Item " + item.getName() + " has been removed from the inventory");
+            System.out.println("Item " + item.getName() + " has been removed from the inventory.");
         } else {
             System.out.println("Item not found!");
         }
@@ -217,11 +242,13 @@ public class Main {
     private static void displayItemsByCategory() {
         if (isInventoryEmpty()) return;
 
-        String categoryInput = getNonEmptyInput("Input Category: ");
-
-        if (!isValidCategory(categoryInput)) {
-            System.out.println("Category " + categoryInput + " does not exist!");
-            return;
+        String categoryInput;
+        while (true) {
+            categoryInput = getNonEmptyInput("Input Category (Clothing, Electronics, Entertainment): ");
+            if (isValidCategory(categoryInput)) {
+                break;
+            }
+            System.out.println("Category " + categoryInput + " does not exist! Please enter a valid category.");
         }
 
         String targetCategory = capitalizeCategory(categoryInput);
@@ -263,7 +290,7 @@ public class Main {
             System.out.println("ID       : " + item.getId());
             System.out.println("Name     : " + item.getName());
             System.out.println("Quantity : " + item.getQuantity());
-            System.out.println("Price    : ₱" + item.getPrice());
+            System.out.printf("Price    : ₱%,.2f\n", item.getPrice());
             System.out.println("Category : " + item.getCategory());
         } else {
             System.out.println("Item not found!");
@@ -273,15 +300,24 @@ public class Main {
     private static void sortItems() {
         if (isInventoryEmpty()) return;
 
-        System.out.print("Input if sort by quantity or price: ");
-        String sortBy = scanner.nextLine().trim().toLowerCase();
-        System.out.print("Input if ascending or descending: ");
-        String order = scanner.nextLine().trim().toLowerCase();
+        String sortBy;
+        while (true) {
+            System.out.print("Input if sort by quantity or price: ");
+            sortBy = scanner.nextLine().trim().toLowerCase();
+            if (sortBy.equals("quantity") || sortBy.equals("price")) {
+                break;
+            }
+            System.out.println("Invalid field! Please enter either 'quantity' or 'price'.");
+        }
 
-        if ((!sortBy.equals("quantity") && !sortBy.equals("price")) || 
-            (!order.equals("asc") && !order.equals("desc"))) {
-            System.out.println("Invalid sorting parameters provided!");
-            return;
+        String order;
+        while (true) {
+            System.out.print("Input if ascending or descending (asc/desc): ");
+            order = scanner.nextLine().trim().toLowerCase();
+            if (order.equals("asc") || order.equals("desc")) {
+                break;
+            }
+            System.out.println("Invalid order! Please enter either 'asc' or 'desc'.");
         }
 
         Comparator<Item> comparator = null;
